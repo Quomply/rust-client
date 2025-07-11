@@ -8,14 +8,14 @@ pub enum QdrantError {
     #[error("Error in the response: {} {} {:?}", .status.code(), .status.message(), .status.metadata())]
     ResponseError {
         /// gRPC status code
-        status: tonic::Status,
+        status: Box<tonic::Status>,
     },
 
     /// Qdrant server responded with a resource exhausted error
     #[error("Resource exhausted: {} {} {:?}, retry after {} seconds", .status.code(), .status.message(), .status.metadata(), .retry_after_seconds)]
     ResourceExhaustedError {
         /// gRPC status code
-        status: tonic::Status,
+        status: Box<tonic::Status>,
         /// Retry after seconds
         retry_after_seconds: u64,
     },
@@ -51,6 +51,7 @@ pub enum QdrantError {
 
 impl From<tonic::Status> for QdrantError {
     fn from(status: tonic::Status) -> Self {
+        let status = Box::new(status);
         if status.code() == tonic::Code::ResourceExhausted {
             if let Some(retry_after_value) = status
                 .metadata()
